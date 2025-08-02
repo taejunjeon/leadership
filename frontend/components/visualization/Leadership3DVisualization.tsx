@@ -31,8 +31,8 @@ interface LeadershipData {
 
 interface Leadership3DVisualizationProps {
   data: LeadershipData[];
-  selectedId?: string;
-  onSelect?: (id: string) => void;
+  selectedId?: string | undefined;
+  onSelect?: (id: string | undefined) => void;
 }
 
 // 축 레이블 컴포넌트
