@@ -57,14 +57,17 @@ jobs:
       with:
         node-version: '20'
     
-    - name: Frontend - Install & Test
+    - name: Install dependencies with Workspaces
       run: |
-        cd frontend
-        # 의존성 설치 전 캐시 정리
-        rm -rf node_modules package-lock.json
-        npm install --legacy-peer-deps
-        npx next lint --max-warnings=1000
-        npm run build
+        # lightningcss 바이너리 고정
+        npm install --workspaces --include-workspace-root
+        # Linux x64용 lightningcss 바이너리 확인
+        npm install lightningcss-linux-x64-gnu --save-optional
+    
+    - name: Frontend - Lint & Build
+      run: |
+        npm run lint --workspace=frontend -- --max-warnings=1000
+        npm run build --workspace=frontend
         
     - name: Backend - Install & Test  
       run: |
