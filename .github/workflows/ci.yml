@@ -59,12 +59,14 @@ jobs:
     
     - name: Install dependencies with Workspaces
       run: |
-        # lightningcss 바이너리 고정
-        npm install --workspaces --include-workspace-root
+        # 안정적인 의존성 설치
+        npm ci --workspaces --include-workspace-root
         # Linux x64용 lightningcss 바이너리 확인
         npm install lightningcss-linux-x64-gnu --save-optional
     
-    - name: Frontend - Lint & Build
+    - name: Frontend - Lint & Build (메모리 최적화)
+      env:
+        NODE_OPTIONS: "--max_old_space_size=4096"
       run: |
         npm run lint --workspace=frontend -- --max-warnings=1000
         npm run build --workspace=frontend
