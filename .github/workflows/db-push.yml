@@ -45,26 +45,12 @@ jobs:
         echo "🚀 Pushing database changes..."
         supabase db push --password $SUPABASE_DB_PASSWORD
     
-    - name: Create survey tables if not exists
+    - name: Apply complete fix for 404 error
       env:
         DATABASE_URL: postgres://postgres:${{ secrets.SUPABASE_DB_PASSWORD }}@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres
       run: |
-        echo "📊 Creating survey tables..."
-        psql "$DATABASE_URL" < scripts/simple-create-tables.sql || true
-        
-    - name: Apply RLS policies
-      env:
-        DATABASE_URL: postgres://postgres:${{ secrets.SUPABASE_DB_PASSWORD }}@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres
-      run: |
-        echo "🔒 Applying RLS policies..."
-        psql "$DATABASE_URL" < scripts/fix-survey-rls.sql || true
-        
-    - name: Grant admin privileges
-      env:
-        DATABASE_URL: postgres://postgres:${{ secrets.SUPABASE_DB_PASSWORD }}@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres
-      run: |
-        echo "👑 Granting admin privileges..."
-        psql "$DATABASE_URL" < scripts/grant-admin.sql || true
+        echo "🔧 Applying complete 404 fix..."
+        psql "$DATABASE_URL" < scripts/404-fix-complete.sql || true
     
     - name: Verify tables
       env:
