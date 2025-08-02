@@ -135,10 +135,10 @@ export const Navigation: React.FC = () => {
                   로그인
                 </Link>
                 <Link
-                  href="/auth"
+                  href="/auth?mode=signup"
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  시작하기
+                  회원가입
                 </Link>
               </div>
             )}

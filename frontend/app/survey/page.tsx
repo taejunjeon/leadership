@@ -6,11 +6,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { surveySections, TOTAL_QUESTIONS, scaleLabels, SurveyQuestion } from '@/data/surveyQuestions';
 import { SurveyProgress } from '@/components/survey/SurveyProgress';
 import { QuestionCard } from '@/components/survey/QuestionCard';
 import { SurveyComplete } from '@/components/survey/SurveyComplete';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface SurveyResponse {
   questionId: string;
@@ -27,11 +29,21 @@ interface SurveyFormData {
 }
 
 export default function SurveyPage() {
+  const router = useRouter();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, number>>({});
   const [isCompleted, setIsCompleted] = useState(false);
+  const [surveyResultId, setSurveyResultId] = useState<string | null>(null);
   const [startTime] = useState(Date.now());
+
+  // 로그인 확인
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth');
+    }
+  }, [user, authLoading, router]);
 
   // 현재 섹션과 질문
   const currentSection = surveySections[currentSectionIndex];
@@ -80,26 +92,117 @@ export default function SurveyPage() {
 
   // 설문 완료 처리
   const handleComplete = async () => {
+    if (!user || !userProfile) {
+      console.error('User not found:', { user, userProfile });
+      return;
+    }
+
     const completionTime = Date.now() - startTime;
     
-    const surveyData: SurveyFormData = {
-      name: '테스트 사용자', // TODO: 사용자 정보 입력 폼 추가
-      email: 'test@example.com',
-      organization: '테스트 조직',
-      department: '개발팀',
-      position: '팀장',
-      responses: Object.entries(responses).map(([questionId, value]) => ({
-        questionId,
-        value
-      }))
-    };
+    try {
+      console.log('Starting survey save...', {
+        userId: user.id,
+        responseCount: Object.keys(responses).length,
+        completionTime: Math.round(completionTime / 1000)
+      });
 
-    console.log('설문 완료:', {
-      ...surveyData,
-      completionTimeSeconds: Math.round(completionTime / 1000)
-    });
+      // Supabase에 설문 결과 저장
+      const { supabase } = await import('@/lib/supabase/client');
+      
+      // 1. survey_results 테이블에 저장
+      const insertData = {
+        user_id: user.id,
+        completion_time: Math.round(completionTime / 1000),
+        completed: true
+      };
+      
+      console.log('Inserting survey result:', insertData);
+      
+      const { data: surveyResult, error: surveyError } = await supabase
+        .from('survey_results')
+        .insert(insertData)
+        .select()
+        .single();
 
-    setIsCompleted(true);
+      if (surveyError) {
+        console.error('Survey result save error detail:', {
+          error: surveyError,
+          message: surveyError.message,
+          details: surveyError.details,
+          hint: surveyError.hint,
+          code: surveyError.code
+        });
+        throw surveyError;
+      }
+
+      // 2. survey_responses 테이블에 응답 저장
+      const responsesToSave = Object.entries(responses).map(([questionId, value]) => ({
+        survey_id: surveyResult.id,
+        question_id: questionId,
+        value: value
+      }));
+
+      const { error: responsesError } = await supabase
+        .from('survey_responses')
+        .insert(responsesToSave);
+
+      if (responsesError) {
+        console.error('Survey responses save error:', responsesError);
+        throw responsesError;
+      }
+
+      console.log('설문 완료 및 저장:', {
+        surveyId: surveyResult.id,
+        userId: user.id,
+        completionTimeSeconds: Math.round(completionTime / 1000),
+        responseCount: responsesToSave.length
+      });
+
+      setSurveyResultId(surveyResult.id);
+      setIsCompleted(true);
+    } catch (error: any) {
+      console.error('설문 저장 중 상세 오류:', {
+        error,
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name,
+        status: error?.status
+      });
+      
+      // 404 에러인 경우 테이블이 없음
+      if (error?.message?.includes('404') || error?.status === 404) {
+        console.error('survey_results 테이블이 존재하지 않습니다. Supabase에서 테이블을 생성하세요.');
+        
+        // 임시로 로컬 스토리지에 저장
+        const tempSurveyId = `temp_${Date.now()}`;
+        const surveyData = {
+          id: tempSurveyId,
+          userId: user.id,
+          responses: Object.entries(responses).map(([questionId, value]) => ({
+            questionId,
+            value
+          })),
+          completedAt: new Date().toISOString(),
+          completionTime: Math.round(completionTime / 1000)
+        };
+        
+        // 로컬 스토리지에 저장
+        localStorage.setItem(`survey_${tempSurveyId}`, JSON.stringify(surveyData));
+        console.log('임시로 로컬 스토리지에 저장했습니다:', tempSurveyId);
+        
+        setSurveyResultId(tempSurveyId);
+        setIsCompleted(true);
+        return;
+      }
+      
+      // RLS 정책 문제일 가능성이 높으므로 권한 확인
+      if (error?.code === '42501' || error?.message?.includes('policy')) {
+        console.error('RLS Policy Error - 테이블 권한을 확인하세요');
+      }
+      
+      // 오류가 발생해도 완료 화면은 표시
+      setIsCompleted(true);
+    }
   };
 
   // 현재 질문에 대한 응답 여부
@@ -119,8 +222,24 @@ export default function SurveyPage() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [currentSectionIndex, currentQuestionIndex, hasCurrentResponse]);
 
+  // 로딩 중이거나 로그인하지 않은 경우
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <h1 className="text-xl font-medium text-gray-700">로그인 확인 중...</h1>
+        </div>
+      </div>
+    );
+  }
+
   if (isCompleted) {
-    return <SurveyComplete responses={responses} />;
+    return <SurveyComplete 
+      responses={responses} 
+      surveyResultId={surveyResultId}
+      userId={user?.id}
+    />;
   }
 
   if (!currentSection || !currentQuestion) {

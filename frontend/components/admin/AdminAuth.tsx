@@ -4,27 +4,46 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { 
   ShieldCheckIcon, 
   EyeIcon, 
   EyeSlashIcon,
   LockClosedIcon 
 } from '@heroicons/react/24/outline';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface AdminAuthProps {
   onAuthenticated: () => void;
 }
 
 export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthenticated }) => {
+  const router = useRouter();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 임시 관리자 비밀번호 (실제 환경에서는 환경 변수나 백엔드 인증 사용)
+  // 마스터 관리자 이메일
+  const MASTER_ADMIN_EMAIL = 'taejun@biocom.kr';
+  // 관리자 비밀번호
   const ADMIN_PASSWORD = 'admin4dx2024!';
+
+  // 로그인 및 권한 확인
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        // 로그인하지 않은 경우 로그인 페이지로
+        router.push('/auth');
+      } else if (user.email === MASTER_ADMIN_EMAIL && userProfile?.role === 'admin') {
+        // 마스터 관리자인 경우 자동 인증
+        onAuthenticated();
+      }
+    }
+  }, [user, userProfile, authLoading, router, onAuthenticated]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +53,10 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthenticated }) => {
     // 비밀번호 검증 시뮬레이션
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    if (password === ADMIN_PASSWORD) {
+    // 마스터 관리자 확인
+    if (user?.email !== MASTER_ADMIN_EMAIL) {
+      setError('관리자 권한이 없습니다.');
+    } else if (password === ADMIN_PASSWORD) {
       onAuthenticated();
     } else {
       setError('잘못된 관리자 비밀번호입니다.');
@@ -42,6 +64,38 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthenticated }) => {
 
     setIsLoading(false);
   };
+
+  // 로딩 중
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-gray-900">
+        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // 권한 없음
+  if (user && user.email !== MASTER_ADMIN_EMAIL) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-gray-900">
+        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
+          <div className="text-center">
+            <ShieldCheckIcon className="w-16 h-16 text-red-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">접근 권한 없음</h2>
+            <p className="text-gray-600 mb-6">
+              이 페이지는 마스터 관리자만 접근할 수 있습니다.
+            </p>
+            <button
+              onClick={() => router.push('/')}
+              className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+            >
+              홈으로 돌아가기
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-gray-900">
@@ -65,6 +119,11 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({ onAuthenticated }) => {
             <p className="text-gray-600 mt-2">
               AI Leadership 4Dx 관리자 대시보드
             </p>
+            {user && (
+              <p className="text-sm text-gray-500 mt-2">
+                로그인: {user.email}
+              </p>
+            )}
           </div>
 
           {/* 보안 경고 */}

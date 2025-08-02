@@ -13,6 +13,7 @@ import {
   ExclamationTriangleIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
+import { supabase } from '@/lib/supabase/client';
 
 interface SurveyResult {
   id: string;
@@ -52,13 +53,136 @@ export const SurveyResultsList: React.FC<SurveyResultsListProps> = ({
   const [results, setResults] = useState<SurveyResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 샘플 데이터 로드
+  // 실제 설문 결과 로드
   useEffect(() => {
+    const loadSurveyResults = async () => {
+      try {
+        // 설문 결과와 사용자 정보 가져오기
+        const { data: surveys, error } = await supabase
+          .from('survey_results')
+          .select(`
+            *,
+            users!inner(*),
+            survey_responses(*)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading survey results:', error);
+          // 오류 발생 시 샘플 데이터 표시
+          loadSampleData();
+          return;
+        }
+
+        if (surveys && surveys.length > 0) {
+          // 실제 데이터를 컴포넌트 형식으로 변환
+          const formattedResults = surveys.map((survey: any) => {
+            // 각 섹션별 점수 계산
+            const responses = survey.survey_responses || [];
+            
+            // Blake-Mouton 점수 계산 (1-14번 문항)
+            const blakeMousetonResponses = responses.filter((r: any) => 
+              parseInt(r.question_id.split('_')[1]) <= 14
+            );
+            const peopleQuestions = [1, 3, 5, 7, 9, 11, 13]; // 사람 지향 문항
+            const productionQuestions = [2, 4, 6, 8, 10, 12, 14]; // 성과 지향 문항
+            
+            const peopleScore = peopleQuestions.reduce((sum, q) => {
+              const response = responses.find((r: any) => r.question_id === `q_${q}`);
+              return sum + (response?.value || 0);
+            }, 0) / peopleQuestions.length;
+            
+            const productionScore = productionQuestions.reduce((sum, q) => {
+              const response = responses.find((r: any) => r.question_id === `q_${q}`);
+              return sum + (response?.value || 0);
+            }, 0) / productionQuestions.length;
+
+            // Radical Candor 점수 계산 (15-24번 문항)
+            const careQuestions = [15, 17, 19, 21, 23]; // Care 문항
+            const challengeQuestions = [16, 18, 20, 22, 24]; // Challenge 문항
+            
+            const careScore = careQuestions.reduce((sum, q) => {
+              const response = responses.find((r: any) => r.question_id === `q_${q}`);
+              return sum + (response?.value || 0);
+            }, 0) / careQuestions.length;
+            
+            const challengeScore = challengeQuestions.reduce((sum, q) => {
+              const response = responses.find((r: any) => r.question_id === `q_${q}`);
+              return sum + (response?.value || 0);
+            }, 0) / challengeQuestions.length;
+
+            // LMX 점수 계산 (25-34번 문항)
+            const lmxQuestions = Array.from({length: 10}, (_, i) => i + 25);
+            const lmxScore = lmxQuestions.reduce((sum, q) => {
+              const response = responses.find((r: any) => r.question_id === `q_${q}`);
+              return sum + (response?.value || 0);
+            }, 0) / lmxQuestions.length;
+
+            // Influence Gauge (숨겨진 분석) 점수 계산 (35-43번 문항)
+            const machQuestions = [35, 38, 41]; // 마키아벨리즘
+            const narcQuestions = [36, 39, 42]; // 나르시시즘
+            const psychQuestions = [37, 40, 43]; // 사이코패시
+            
+            const machScore = machQuestions.reduce((sum, q) => {
+              const response = responses.find((r: any) => r.question_id === `q_${q}`);
+              return sum + (response?.value || 0);
+            }, 0) / machQuestions.length;
+            
+            const narcScore = narcQuestions.reduce((sum, q) => {
+              const response = responses.find((r: any) => r.question_id === `q_${q}`);
+              return sum + (response?.value || 0);
+            }, 0) / narcQuestions.length;
+            
+            const psychScore = psychQuestions.reduce((sum, q) => {
+              const response = responses.find((r: any) => r.question_id === `q_${q}`);
+              return sum + (response?.value || 0);
+            }, 0) / psychQuestions.length;
+
+            // 위험도 계산 (숨겨진 점수 평균이 3.5 이상이면 high)
+            const avgHiddenScore = (machScore + narcScore + psychScore) / 3;
+            const riskLevel = avgHiddenScore >= 3.5 ? 'high' : 
+                            avgHiddenScore >= 2.5 ? 'medium' : 'low';
+
+            return {
+              id: survey.id,
+              name: survey.users.name || '이름 없음',
+              email: survey.users.email,
+              organization: survey.users.organization,
+              department: survey.users.department,
+              position: survey.users.position,
+              completedAt: survey.created_at,
+              riskLevel,
+              completionRate: (responses.length / 43) * 100,
+              blakeMousetonScore: { people: peopleScore, production: productionScore },
+              feedbackScore: { care: careScore, challenge: challengeScore },
+              lmxScore,
+              hiddenScores: {
+                machiavellianism: machScore,
+                narcissism: narcScore,
+                psychopathy: psychScore
+              }
+            };
+          });
+
+          setResults(formattedResults);
+        } else {
+          // 데이터가 없으면 샘플 데이터 표시
+          loadSampleData();
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        loadSampleData();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // 샘플 데이터 로드 함수
     const loadSampleData = () => {
       const sampleResults: SurveyResult[] = [
         {
-          id: 'user_001',
-          name: '김철수',
+          id: 'sample_001',
+          name: '김철수 (샘플)',
           email: 'kim@company.com',
           organization: 'ABC 기업',
           department: '개발팀',
@@ -76,8 +200,8 @@ export const SurveyResultsList: React.FC<SurveyResultsListProps> = ({
           }
         },
         {
-          id: 'user_002',
-          name: '이영희',
+          id: 'sample_002',
+          name: '이영희 (샘플)',
           email: 'lee@company.com',
           organization: 'XYZ 기업',
           department: '마케팅팀',
@@ -93,35 +217,14 @@ export const SurveyResultsList: React.FC<SurveyResultsListProps> = ({
             narcissism: 3.8,
             psychopathy: 2.1
           }
-        },
-        {
-          id: 'user_003',
-          name: '박민수',
-          email: 'park@company.com',
-          organization: 'DEF 기업',
-          department: '영업팀',
-          position: '과장',
-          completedAt: '2024-08-01T16:45:00Z',
-          riskLevel: 'high',
-          completionRate: 100,
-          blakeMousetonScore: { people: 3.1, production: 8.8 },
-          feedbackScore: { care: 2.9, challenge: 8.5 },
-          lmxScore: 4.2,
-          hiddenScores: {
-            machiavellianism: 4.2,
-            narcissism: 4.5,
-            psychopathy: 3.8
-          }
         }
       ];
 
-      setTimeout(() => {
-        setResults(sampleResults);
-        setIsLoading(false);
-      }, 1000);
+      setResults(sampleResults);
+      setIsLoading(false);
     };
 
-    loadSampleData();
+    loadSurveyResults();
   }, []);
 
   const getRiskColor = (level: 'low' | 'medium' | 'high') => {

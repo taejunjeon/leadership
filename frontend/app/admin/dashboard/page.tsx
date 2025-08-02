@@ -23,6 +23,63 @@ export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'results' | 'analysis'>('overview');
+  const [stats, setStats] = useState({
+    totalResponses: 0,
+    riskSignals: 0,
+    completionRate: 0
+  });
+
+  // 통계 데이터 로드
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadStatistics();
+    }
+  }, [isAuthenticated]);
+
+  const loadStatistics = async () => {
+    try {
+      const { supabase } = await import('@/lib/supabase/client');
+      
+      // 전체 응답자 수
+      const { count: totalCount } = await supabase
+        .from('survey_results')
+        .select('*', { count: 'exact', head: true });
+
+      // 위험 신호 (hidden scores 평균이 3.5 이상)
+      const { data: surveys } = await supabase
+        .from('survey_results')
+        .select('id, survey_responses(*)');
+
+      let riskCount = 0;
+      if (surveys) {
+        surveys.forEach((survey: any) => {
+          const responses = survey.survey_responses || [];
+          // Influence Gauge 문항 (35-43번)
+          const hiddenQuestions = Array.from({length: 9}, (_, i) => i + 35);
+          const hiddenResponses = responses.filter((r: any) => {
+            const qNum = parseInt(r.question_id.split('_')[1]);
+            return hiddenQuestions.includes(qNum);
+          });
+          
+          if (hiddenResponses.length > 0) {
+            const avgScore = hiddenResponses.reduce((sum: number, r: any) => sum + r.value, 0) / hiddenResponses.length;
+            if (avgScore >= 3.5) riskCount++;
+          }
+        });
+      }
+
+      // 완료율 계산
+      const completionRate = totalCount ? 100 : 0;
+
+      setStats({
+        totalResponses: totalCount || 0,
+        riskSignals: riskCount,
+        completionRate
+      });
+    } catch (error) {
+      console.error('Error loading statistics:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
@@ -103,7 +160,7 @@ export default function AdminDashboard() {
                     <UserIcon className="w-8 h-8 text-blue-600" />
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">총 응답자</h3>
-                      <p className="text-3xl font-bold text-blue-600">0</p>
+                      <p className="text-3xl font-bold text-blue-600">{stats.totalResponses}</p>
                     </div>
                   </div>
                 </div>
@@ -113,7 +170,7 @@ export default function AdminDashboard() {
                     <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">위험 신호</h3>
-                      <p className="text-3xl font-bold text-red-600">0</p>
+                      <p className="text-3xl font-bold text-red-600">{stats.riskSignals}</p>
                     </div>
                   </div>
                 </div>
@@ -123,7 +180,7 @@ export default function AdminDashboard() {
                     <ChartBarIcon className="w-8 h-8 text-green-600" />
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">분석 완료</h3>
-                      <p className="text-3xl font-bold text-green-600">0%</p>
+                      <p className="text-3xl font-bold text-green-600">{stats.completionRate}%</p>
                     </div>
                   </div>
                 </div>

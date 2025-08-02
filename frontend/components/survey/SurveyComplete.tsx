@@ -9,24 +9,36 @@ import { motion } from 'framer-motion';
 import { CheckCircleIcon, ArrowPathIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
+import { useRouter } from 'next/navigation';
+
 interface SurveyCompleteProps {
   responses: Record<string, number>;
+  surveyResultId?: string | null;
+  userId?: string;
 }
 
 export const SurveyComplete: React.FC<SurveyCompleteProps> = ({
   responses,
+  surveyResultId,
+  userId
 }) => {
+  const router = useRouter();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const responseCount = Object.keys(responses).length;
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
     
-    // TODO: 실제 분석 API 호출
+    // 2초 대기 후 분석 페이지로 이동
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    setIsAnalyzing(false);
-    // TODO: 결과 페이지로 이동
+    if (surveyResultId) {
+      // 분석 결과 페이지로 이동
+      router.push(`/analysis/${surveyResultId}`);
+    } else {
+      // surveyResultId가 없으면 대시보드로 이동
+      router.push('/dashboard');
+    }
   };
 
   return (
