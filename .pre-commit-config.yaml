@@ -1,30 +1,59 @@
+# See https://pre-commit.com for more information
 repos:
+  # 보안 검사
   - repo: https://github.com/zricethezav/gitleaks
     rev: v8.18.0
     hooks:
       - id: gitleaks
 
+  # Python - Ruff (Black + isort + flake8 대체)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.7.4
+    hooks:
+      - id: ruff
+        args: ["check", "--fix"]
+        files: ^backend/
+      - id: ruff-format
+        files: ^backend/
+
+  # Python - Type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        additional_dependencies: 
+          - types-passlib
+          - types-python-jose
+          - types-requests
+        files: ^backend/
+        args: ["--ignore-missing-imports"]
+
+  # JavaScript/TypeScript - ESLint
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint
+        entry: bash -c 'cd frontend && npx eslint --fix --max-warnings=0'
+        language: system
+        files: ^frontend/.*\.(js|jsx|ts|tsx)$
+        pass_filenames: false
+
+  # 일반 코드 품질
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
+      - id: check-json
       - id: check-yaml
       - id: check-added-large-files
-        args: ['--maxkb=1000']
-      - id: check-json
+        args: ["--maxkb=1000"]
       - id: check-merge-conflict
+      - id: detect-private-key
 
-  - repo: https://github.com/psf/black
-    rev: 23.12.1
+  # Markdown
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
     hooks:
-      - id: black
-        language_version: python3.11
-        files: ^backend/
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        args: ["--profile", "black"]
-        files: ^backend/
+      - id: markdownlint
+        args: ["--fix", "--disable", "MD013", "MD033"]

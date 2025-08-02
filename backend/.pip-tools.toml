@@ -1,0 +1,12 @@
+[compile]
+# pip-compile 설정
+generate-hashes = false
+upgrade = false
+output-file = "requirements.txt"
+input-file = "requirements.in"
+resolver = "backtracking"
+
+# 추가 옵션
+strip-extras = true
+allow-unsafe = true
+emit-find-links = false

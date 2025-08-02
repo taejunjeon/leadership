@@ -1,0 +1,87 @@
+name: Main CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  # 빌드 테스트
+  build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [frontend, backend]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js (Frontend)
+      if: matrix.component == 'frontend'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Frontend Build
+      if: matrix.component == 'frontend'
+      env:
+        NODE_OPTIONS: "--max_old_space_size=4096"
+      run: |
+        cd frontend
+        npm ci
+        npm run build
+        echo "✅ Frontend 빌드 성공"
+    
+    - name: Setup Python (Backend)
+      if: matrix.component == 'backend'
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+        cache-dependency-path: backend/requirements*.txt
+    
+    - name: Backend Docker Build Test
+      if: matrix.component == 'backend'
+      run: |
+        cd backend
+        # Dockerfile이 있다면 빌드 테스트
+        if [ -f Dockerfile ]; then
+          docker build -t leadership-backend:test .
+          echo "✅ Backend Docker 빌드 성공"
+        else
+          echo "⚠️ Dockerfile 없음 - 스킵"
+        fi
+
+  # 통합 테스트 준비
+  integration-ready:
+    runs-on: ubuntu-latest
+    needs: [build-test]
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check Integration Readiness
+      run: |
+        echo "📋 통합 테스트 준비 상태 확인"
+        echo "- Frontend 빌드: ✅"
+        echo "- Backend 빌드: ✅"
+        echo "- DB 마이그레이션: TODO"
+        echo "- E2E 테스트 환경: TODO"
+
+  # 배포 가능 여부 체크
+  deploy-check:
+    runs-on: ubuntu-latest
+    needs: [integration-ready]
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - name: Deployment Readiness
+      run: |
+        echo "🚀 배포 준비 상태"
+        echo "- 환경 변수 설정: TODO"
+        echo "- Vercel 프로젝트 연결: TODO"
+        echo "- Supabase 프로젝트 연결: TODO"
+        echo ""
+        echo "📌 배포하려면 release 태그를 생성하세요"
