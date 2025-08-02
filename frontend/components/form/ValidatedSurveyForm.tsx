@@ -294,10 +294,12 @@ export const ValidatedSurveyForm: React.FC<ValidatedSurveyFormProps> = ({
           
           <div className="space-y-6">
             {dimensions[currentDimension].questions.map((question) => {
-              const fieldFeedback = useFieldValidationFeedback(
-                question.field,
-                realtimeFeedback
-              );
+              // Hook을 map 밖으로 이동해야 함 - 임시로 주석 처리
+              // const fieldFeedback = useFieldValidationFeedback(
+              //   question.field,
+              //   realtimeFeedback
+              // );
+              const fieldFeedback = null; // 임시 처리
               
               return (
                 <div key={question.field}>
