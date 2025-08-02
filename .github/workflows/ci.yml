@@ -1,0 +1,68 @@
+name: Minimal CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    - name: Secret Scanning
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: ${{ github.event.before }}
+        head: HEAD
+        extra_args: --debug --only-verified
+
+  structure-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check folder structure
+      run: |
+        # Ensure frontend is not nested
+        if [ -d "backend/frontend" ]; then
+          echo "❌ Error: Nested frontend folder detected at backend/frontend"
+          exit 1
+        fi
+        
+        # Ensure single package.json in frontend
+        PACKAGE_COUNT=$(find frontend -name "package.json" | wc -l)
+        if [ "$PACKAGE_COUNT" -ne 1 ]; then
+          echo "❌ Error: Expected 1 package.json in frontend, found $PACKAGE_COUNT"
+          find frontend -name "package.json"
+          exit 1
+        fi
+        
+        echo "✅ Folder structure is correct"
+
+  test:
+    runs-on: ubuntu-latest
+    needs: [security, structure-check]
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Frontend - Install & Test
+      run: |
+        cd frontend
+        npm ci
+        npm run lint
+        npm run build
+        
+    - name: Backend - Install & Test  
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        black --check .
+        mypy .
