@@ -299,7 +299,7 @@ export const ValidatedSurveyForm: React.FC<ValidatedSurveyFormProps> = ({
               //   question.field,
               //   realtimeFeedback
               // );
-              const fieldFeedback = null; // 임시 처리
+              const fieldFeedback = { status: 'idle' as const, message: '' }; // 임시 처리
               
               return (
                 <div key={question.field}>

@@ -52,7 +52,7 @@ export const useRealtimeSubscription = ({
 
     // 데이터베이스 변경 구독
     if (table) {
-      realtimeChannel.on(
+      (realtimeChannel as any).on(
         'postgres_changes',
         {
           event,
@@ -60,7 +60,7 @@ export const useRealtimeSubscription = ({
           table,
           filter
         },
-        (payload) => {
+        (payload: any) => {
           console.log('Realtime event:', payload);
           setLastEvent({
             eventType: payload.eventType,
@@ -149,7 +149,7 @@ export const usePresence = (channelName: string = 'online-users') => {
     const channel = supabase.channel(channelName, {
       config: {
         presence: {
-          key: supabase.auth.getSession().then(({ data }) => data?.session?.user?.id || 'anonymous')
+          key: 'user'
         }
       }
     });

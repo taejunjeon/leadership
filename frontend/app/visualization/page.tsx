@@ -50,7 +50,7 @@ const generateSampleData = () => {
 
 export default function VisualizationPage() {
   const [data, setData] = useState(() => generateSampleData());
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
   const [showControls, setShowControls] = useState(true);
   const [filterRiskLevel, setFilterRiskLevel] = useState<string>('all');
 
@@ -60,12 +60,12 @@ export default function VisualizationPage() {
     : data.filter(d => d.riskLevel === filterRiskLevel);
 
   // 선택된 사용자 정보
-  const selectedUser = selectedId ? data.find(d => d.id === selectedId) : null;
+  const selectedUser = selectedId ? data.find(d => d.id === selectedId) : undefined;
 
   // 데이터 새로고침
   const refreshData = () => {
     setData(generateSampleData());
-    setSelectedId(null);
+    setSelectedId(undefined);
   };
 
   // 키보드 단축키

@@ -140,7 +140,7 @@ export const SurveyResultsList: React.FC<SurveyResultsListProps> = ({
 
             // 위험도 계산 (숨겨진 점수 평균이 3.5 이상이면 high)
             const avgHiddenScore = (machScore + narcScore + psychScore) / 3;
-            const riskLevel = avgHiddenScore >= 3.5 ? 'high' : 
+            const riskLevel: 'low' | 'medium' | 'high' = avgHiddenScore >= 3.5 ? 'high' : 
                             avgHiddenScore >= 2.5 ? 'medium' : 'low';
 
             return {
