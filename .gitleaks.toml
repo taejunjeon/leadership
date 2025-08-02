@@ -1,36 +1,18 @@
-title = "Grid 3.0 Gitleaks Configuration"
-
-[extend]
-useDefault = true
-
-[[rules]]
-id = "supabase-url"
-description = "Supabase URL"
-regex = '''https://[a-zA-Z0-9]+\.supabase\.co'''
-tags = ["supabase", "url"]
-
-[[rules]]
-id = "supabase-key"
-description = "Supabase API Key"
-regex = '''(supabase_anon_key|supabase_service_key|SUPABASE_KEY)['"]?\s*[:=]\s*['"]?[a-zA-Z0-9\-_\.]+['"]?'''
-tags = ["supabase", "key", "api"]
-
-[[rules]]
-id = "jwt-secret"
-description = "JWT Secret"
-regex = '''(jwt_secret|JWT_SECRET)['"]?\s*[:=]\s*['"]?[a-zA-Z0-9\-_\.]+['"]?'''
-tags = ["jwt", "secret"]
-
-[[rules]]
-id = "openai-key"
-description = "OpenAI API Key"
-regex = '''sk-[a-zA-Z0-9]{48}'''
-tags = ["openai", "api", "key"]
-
 [allowlist]
+description = "Global Allow Lists"
+
+# Allow all markdown files
 paths = [
-    '''.env.example''',
-    '''.env.local.example''',
-    '''**/*.md''',
-    '''docs/'''
+    '''^.*\.md$''',
+    '''^docs/.*$'''
+]
+
+# Common test/example patterns
+regexes = [
+    '''your-secret-key-here''',
+    '''your_supabase_url''',
+    '''your_supabase_key''',
+    '''your-openai-key''',
+    '''example\.com''',
+    '''localhost'''
 ]

@@ -10,7 +10,7 @@ Grid 3.0은 빠르게 성장하는 스타트업이 리더십 갭을 실시간으
 
 ### 🎯 4차원 리더십 측정
 - **People Concern** (사람에 대한 관심): X축
-- **Production Concern** (성과에 대한 관심): Y축  
+- **Production Concern** (성과에 대한 관심): Y축
 - **Candor Level** (진실한 직면 수준): Z축
 - **LMX Quality** (리더-구성원 교환 품질): 점 크기
 
@@ -26,7 +26,7 @@ Grid 3.0은 빠르게 성장하는 스타트업이 리더십 갭을 실시간으
 
 ### 📊 실시간 대시보드
 - **팀별 분석**: 리더십 스타일 분포
-- **트렌드 추적**: 분기별 변화 모니터링  
+- **트렌드 추적**: 분기별 변화 모니터링
 - **KPI 메트릭**: 설문 완료율, OKR 달성률 등
 
 ## 🚀 기술 스택
@@ -43,7 +43,7 @@ Data Fetching: TanStack Query v5
 Forms: React Hook Form + Zod
 ```
 
-### 백엔드  
+### 백엔드
 ```yaml
 Framework: FastAPI (Python 3.12)
 Validation: Pydantic v2
@@ -97,17 +97,43 @@ leadership/
 - **Python** 3.12 (백엔드 개발 시)
 - **Git** (버전 관리)
 
+### 개발 환경 설정
+
+#### 브랜치 전략
+- `main`: 프로덕션 배포용 (보호됨)
+- `develop`: 개발 통합 브랜치 (기본)
+- `feat/*`: 기능 개발
+- `fix/*`: 버그 수정
+
+#### 초기 설정
+```bash
+# 1. 저장소 클론
+git clone https://github.com/taejunjeon/leadership.git
+cd leadership
+
+# 2. develop 브랜치로 전환
+git checkout develop
+
+# 3. pre-commit 설치
+pip install pre-commit
+pre-commit install
+
+# 4. 백엔드 의존성 설치 (pip-tools 사용)
+cd backend
+pip install pip-tools
+pip-sync requirements-dev.txt
+
+# 5. 프론트엔드 의존성 설치
+cd ../frontend
+npm install
+```
+
 ### 1분 내 데모 실행
 
 ```bash
-# 1. 저장소 클론
-git clone https://github.com/username/grid3-leadership.git
-cd grid3-leadership
-
-# 2. 프론트엔드 실행 (데모 모드)
+# 프론트엔드 실행 (데모 모드)
 cd frontend
-npm install
-npm run dev:demo  # 목 데이터로 실행
+npm run dev
 
 # 🎉 http://localhost:3000 에서 확인!
 ```
@@ -168,16 +194,17 @@ OPENAI_API_KEY=your-openai-key  # AI 코칭용
 
 | 문서 | 설명 | 중요도 |
 |------|------|--------|
+| [개발 워크플로우](./docs/DEVELOPMENT_WORKFLOW.md) | 브랜치 전략 및 CI/CD | 🔥 필수 |
 | [시스템 개요](./docs/system-overview.md) | 전체 아키텍처 이해 | 🔥 필수 |
 | [개발 규칙](./docs/development-rules.md) | 코딩 컨벤션 및 품질 기준 | 🔥 필수 |
 | [API 문서](./docs/API.md) | REST API 명세서 | ⭐ 중요 |
 | [DB 스키마](./docs/database-schema.md) | 데이터베이스 구조 | ⭐ 중요 |
 | [테스트 전략](./docs/test-strategy.md) | 테스트 가이드라인 | ⭐ 중요 |
-| [Git 워크플로우](./docs/git-workflow.md) | 브랜치 전략 | 💡 참고 |
+| [Git 워크플로우](./docs/git-workflow.md) | Git 사용 규칙 | 💡 참고 |
 
 ## 🤝 기여하기
 
-Grid 3.0에 기여해주셔서 감사합니다! 
+Grid 3.0에 기여해주셔서 감사합니다!
 
 ### 기여 절차
 1. **Fork** 후 브랜치 생성: `git checkout -b feature/amazing-feature`
@@ -188,7 +215,7 @@ Grid 3.0에 기여해주셔서 감사합니다!
 
 ### 기여 가능 영역
 - 🎯 **코어 기능**: 4D 점수 계산 로직 개선
-- 🎨 **UI/UX**: 3D 시각화 인터랙션 개선  
+- 🎨 **UI/UX**: 3D 시각화 인터랙션 개선
 - 🤖 **AI 코칭**: 추천 알고리즘 고도화
 - 📱 **모바일**: 반응형 디자인 최적화
 - 🔧 **인프라**: 성능 최적화 및 배포 자동화
