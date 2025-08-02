@@ -58,11 +58,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         {/* 척도 라벨 */}
         <div className="flex justify-between text-sm text-gray-600 px-2">
           <span>{scaleLabels[scale.min]}</span>
-          {scaleLabels[Math.ceil((scale.min + scale.max) / 2)] && (
-            <span className="hidden sm:block">
-              {scaleLabels[Math.ceil((scale.min + scale.max) / 2)]}
-            </span>
-          )}
+          <span className="hidden sm:block">
+            {scale.max === 7 ? '보통' : '보통이다'}
+          </span>
           <span>{scaleLabels[scale.max]}</span>
         </div>
 
@@ -99,7 +97,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 onChange={() => onChange(option)}
                 className="sr-only"
               />
-              <span className="mt-2 text-xs text-gray-500">{option}</span>
+              {/* 숫자 아래 레이블 표시 */}
+              {scaleLabels[option] && (
+                <span className="mt-2 text-xs text-gray-600 text-center max-w-[60px]">
+                  {scaleLabels[option]}
+                </span>
+              )}
             </label>
           ))}
         </div>

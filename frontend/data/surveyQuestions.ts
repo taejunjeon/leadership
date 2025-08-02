@@ -386,12 +386,18 @@ export const TOTAL_QUESTIONS = surveySections.reduce(
 export const scaleLabels = {
   sevenPoint: {
     1: '전혀 그렇지 않다',
-    4: '보통이다',
+    2: '낮음',
+    3: '낮음',
+    4: '보통',
+    5: '보통',
+    6: '높음',
     7: '매우 그렇다'
   },
   fivePoint: {
     1: '전혀 아니다',
+    2: '아니다',
     3: '보통이다',
+    4: '그렇다',
     5: '매우 그렇다'
   }
 };
