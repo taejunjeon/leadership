@@ -1,0 +1,13 @@
+{
+  "name": "@leadership/scripts",
+  "version": "1.0.0",
+  "description": "Scripts for AI Leadership 4Dx project",
+  "private": true,
+  "scripts": {
+    "check-tables": "node create-tables-api.js",
+    "migrate": "node migrate-with-supabase.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  }
+}
