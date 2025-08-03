@@ -4,9 +4,9 @@ Supabase 클라이언트 설정
 """
 
 import os
-from typing import Optional
-from supabase import create_client, Client
+
 from dotenv import load_dotenv
+from supabase import Client, create_client
 
 load_dotenv()
 
@@ -20,13 +20,14 @@ if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
 # 서비스 클라이언트 (백엔드 전용, RLS 우회)
 supabase_service: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-def get_supabase_client(access_token: Optional[str] = None) -> Client:
+
+def get_supabase_client(access_token: str | None = None) -> Client:
     """
     Supabase 클라이언트 반환
-    
+
     Args:
         access_token: 사용자 JWT 토큰 (RLS 적용을 위해 필요)
-    
+
     Returns:
         Supabase Client 인스턴스
     """
@@ -38,6 +39,7 @@ def get_supabase_client(access_token: Optional[str] = None) -> Client:
     else:
         # 서비스 클라이언트 반환
         return supabase_service
+
 
 # 데이터베이스 스키마 상수
 GRID3_SCHEMA = "grid3"

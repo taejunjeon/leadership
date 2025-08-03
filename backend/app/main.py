@@ -2,12 +2,14 @@
 AI Leadership 4Dx - Main FastAPI Application
 """
 
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-import logging
+
+from .api import ai, analysis, auth, health, reports, survey
 from .core.config import settings
-from .api import health, auth, survey, analysis, reports, ai
 from .core.database import supabase_client
 
 # 로깅 설정
@@ -25,7 +27,7 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting AI Leadership 4Dx API...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Debug mode: {settings.DEBUG}")
-    
+
     # Supabase 연결 확인
     try:
         # 헬스 체크
@@ -33,9 +35,9 @@ async def lifespan(app: FastAPI):
         logger.info("✅ Supabase connection established")
     except Exception as e:
         logger.error(f"❌ Supabase connection failed: {e}")
-    
+
     yield
-    
+
     # 종료 시
     logger.info("👋 Shutting down AI Leadership 4Dx API...")
 
@@ -82,7 +84,7 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host=settings.HOST,

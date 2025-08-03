@@ -2,8 +2,10 @@
 AI Leadership 4Dx - Health Check API
 """
 
-from fastapi import APIRouter, status
 from datetime import datetime
+
+from fastapi import APIRouter, status
+
 from ..core.config import settings
 from ..core.database import get_supabase
 
@@ -20,7 +22,7 @@ async def health_check():
         "version": settings.APP_VERSION,
         "environment": settings.ENVIRONMENT,
     }
-    
+
     # Supabase 연결 체크
     try:
         client = get_supabase()
@@ -30,7 +32,7 @@ async def health_check():
     except Exception as e:
         health_status["status"] = "degraded"
         health_status["database"] = f"error: {str(e)}"
-    
+
     return health_status
 
 
@@ -41,7 +43,7 @@ async def readiness_check():
         # 모든 필수 서비스 체크
         client = get_supabase()
         client.auth.get_session()
-        
+
         return {
             "ready": True,
             "timestamp": datetime.utcnow().isoformat(),
